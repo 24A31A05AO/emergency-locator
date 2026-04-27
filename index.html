@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Emergency Resource Locator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --navy:#0A1628;--navy2:#0d1f3c;
+  --red:#E24B4A;--rdark:#A32D2D;--rlight:#FCEBEB;
+  --blue:#185FA5;--blight:#E6F1FB;
+  --amber:#BA7517;--alight:#FAEEDA;
+  --teal:#0F6E56;--tlight:#E1F5EE;
+  --purple:#534AB7;--plight:#EEEDFE;
+  --pink:#D4537E;--pklight:#FBEAF0;
+  --green:#3B6D11;--glight:#EAF3DE;
+  --gray:#2C2C2A;--gmid:#888780;--glight2:#F1EFE8;
+  --surface:#fff;--bg:#F0F2F7;--border:rgba(0,0,0,.09);
+  --radius:14px;--fd:'Rajdhani',sans-serif;--fb:'DM Sans',sans-serif;
+}
+html,body{height:100%;font-family:var(--fb);color:var(--gray);overflow:hidden;}
+
+/* ── GLOBAL NAV BAR (all pages) ── */
+.global-nav{
+  position:fixed;top:0;left:0;right:0;
+  height:48px;z-index:3000;
+  background:rgba(10,22,40,.97);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;
+  padding:0 20px;gap:6px;
+}
+.gnav-links{display:flex;align-items:center;gap:4px;}
+.gnav-logo{
+  font-family:var(--fd);font-size:13px;font-weight:700;color:#fff;
+  letter-spacing:1.5px;text-transform:uppercase;margin-right:10px;
+  opacity:.7;
+}
+.gnav-link{
+  padding:5px 14px;border-radius:7px;font-size:13px;font-weight:500;
+  font-family:var(--fb);text-decoration:none;color:rgba(255,255,255,.7);
+  background:transparent;border:1px solid transparent;
+  transition:all .15s;cursor:pointer;
+}
+.gnav-link:hover{background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.15);}
+.gnav-link.active-pg{color:#fff;background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.2);}
+.gnav-sos{display:flex;gap:5px;margin-left:auto;}
+.gnav-sos a{
+  padding:5px 11px;border-radius:7px;font-size:11px;font-weight:500;
+  font-family:var(--fb);text-decoration:none;transition:all .15s;
+}
+.gnav-sos a:hover{opacity:.8;transform:scale(1.04);}
+.gs-amb{background:rgba(226,75,74,.18);color:#ff8a87;border:1px solid rgba(226,75,74,.3);}
+.gs-pol{background:rgba(24,95,165,.18);color:#7ab8e8;border:1px solid rgba(24,95,165,.3);}
+.gs-fir{background:rgba(186,117,23,.18);color:#f5c06b;border:1px solid rgba(186,117,23,.3);}
+
+/* all pages push down by global nav height */
+.page{
+  position:fixed;inset:0;padding-top:48px;display:flex;flex-direction:column;
+  opacity:0;pointer-events:none;
+  transition:opacity .38s ease,transform .38s ease;
+  transform:translateX(48px);overflow:hidden;
+}
+.page.active{opacity:1;pointer-events:all;transform:translateX(0);}
+.page.out{opacity:0;transform:translateX(-48px);}
+
+/* ════════════════════════════════
+   PAGE 1 — HOME
+════════════════════════════════ */
+#p1{overflow-y:auto;overflow-x:hidden;}
+.home-bg{
+  position:fixed;inset:0;z-index:0;
+  background:linear-gradient(135deg,#0A1628 0%,#1a0a2e 30%,#0d2b4a 55%,#1a2d0a 78%,#0a2020 100%);
+  pointer-events:none;
+}
+.blob{position:fixed;border-radius:50%;filter:blur(80px);pointer-events:none;animation:drift 12s ease-in-out infinite;}
+.blob1{width:420px;height:420px;background:rgba(226,75,74,.22);top:-80px;right:-80px;}
+.blob2{width:340px;height:340px;background:rgba(83,74,183,.2);bottom:5%;left:-60px;animation-delay:-4s;}
+.blob3{width:260px;height:260px;background:rgba(15,110,86,.18);top:42%;left:32%;animation-delay:-8s;}
+.blob4{width:220px;height:220px;background:rgba(186,117,23,.15);bottom:15%;right:12%;animation-delay:-6s;}
+@keyframes drift{
+  0%,100%{transform:translate(0,0) scale(1);}
+  33%{transform:translate(24px,-16px) scale(1.04);}
+  66%{transform:translate(-16px,24px) scale(.96);}
+}
+.home-wrap{
+  position:relative;z-index:2;
+  min-height:100%;display:flex;flex-direction:column;
+  padding-bottom:32px;
+}
+
+/* NAV */
+.hnav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 36px;gap:16px;flex-wrap:wrap;
+}
+.nlogo{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.pdot{width:11px;height:11px;border-radius:50%;background:var(--red);animation:pulse 1.9s ease-in-out infinite;flex-shrink:0;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(226,75,74,.6);}50%{box-shadow:0 0 0 10px rgba(226,75,74,0);}}
+.ltxt{
+  font-family:var(--fd);font-size:clamp(13px,1.8vw,17px);font-weight:700;
+  color:#fff;letter-spacing:1.5px;text-transform:uppercase;line-height:1.2;
+}
+
+/* right nav — page links + sos */
+.nav-right{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.nav-link{
+  padding:7px 14px;border-radius:8px;font-size:13px;font-weight:500;
+  font-family:var(--fb);text-decoration:none;color:rgba(255,255,255,.75);
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+  transition:all .15s;cursor:pointer;
+}
+.nav-link:hover{background:rgba(255,255,255,.16);color:#fff;border-color:rgba(255,255,255,.25);}
+.nav-sep{width:1px;height:18px;background:rgba(255,255,255,.15);margin:0 4px;}
+.sosnav{display:flex;gap:6px;}
+.sosnav a{
+  padding:7px 13px;border-radius:8px;font-size:12px;font-weight:500;
+  font-family:var(--fb);text-decoration:none;transition:all .15s;
+}
+.sa{background:rgba(226,75,74,.15);color:#ff8a87;border:1px solid rgba(226,75,74,.3);}
+.sp{background:rgba(24,95,165,.15);color:#7ab8e8;border:1px solid rgba(24,95,165,.3);}
+.sf{background:rgba(186,117,23,.15);color:#f5c06b;border:1px solid rgba(186,117,23,.3);}
+.sosnav a:hover,.nav-link:hover{opacity:.9;transform:scale(1.03);}
+
+/* HERO */
+.hero{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:32px 24px 20px;text-align:center;
+}
+.hero-h1{
+  font-family:var(--fd);font-size:clamp(42px,7.5vw,82px);
+  font-weight:700;line-height:1.06;color:#fff;
+  letter-spacing:-1px;margin-bottom:0;
+}
+.navy-line{color:#1E4D8C;}
+
+/* CTA */
+.cta{
+  display:inline-flex;align-items:center;gap:12px;
+  padding:16px 44px;background:var(--red);color:#fff;
+  border:none;border-radius:60px;
+  font-family:var(--fd);font-size:20px;font-weight:700;
+  letter-spacing:.5px;text-transform:uppercase;cursor:pointer;
+  box-shadow:0 10px 36px rgba(226,75,74,.48);
+  transition:all .22s;margin-top:36px;
+}
+.cta:hover{transform:translateY(-3px);box-shadow:0 16px 44px rgba(226,75,74,.58);}
+.cta:active{transform:translateY(0);}
+.cta-arr{font-size:20px;transition:transform .2s;}
+.cta:hover .cta-arr{transform:translateX(7px);}
+
+/* STATS */
+.stats{
+  display:flex;gap:40px;margin-top:40px;padding-top:28px;
+  border-top:1px solid rgba(255,255,255,.1);flex-wrap:wrap;justify-content:center;
+}
+.stn{font-family:var(--fd);font-size:30px;font-weight:700;color:#fff;text-align:center;}
+.stl{font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.6px;margin-top:2px;text-align:center;text-transform:uppercase;}
+
+/* FEATURE CARDS */
+.fcards{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:14px;
+  max-width:760px;width:100%;margin-top:32px;
+}
+.fc{
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+  border-radius:var(--radius);padding:18px;text-align:left;
+  backdrop-filter:blur(6px);transition:background .2s;
+}
+.fc:hover{background:rgba(255,255,255,.1);}
+.fc-icon{font-size:24px;margin-bottom:8px;}
+.fc-t{font-size:13px;font-weight:500;color:#fff;margin-bottom:4px;}
+.fc-b{font-size:11px;color:rgba(255,255,255,.38);line-height:1.55;}
+
+/* ABOUT MODAL */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9000;
+  display:none;align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);
+}
+.modal-overlay.show{display:flex;}
+.modal{background:linear-gradient(145deg,#0d1f3c,#1a1040);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:32px;max-width:480px;width:90%;position:relative;box-shadow:0 24px 80px rgba(0,0,0,.5);color:#fff;}
+.modal h2{font-family:var(--fd);font-size:20px;font-weight:700;color:#fff;margin-bottom:14px;line-height:1.35;}
+.modal p{font-size:14px;color:rgba(255,255,255,.6);line-height:1.75;margin-bottom:10px;}
+.modal-close{position:absolute;top:16px;right:18px;width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}.modal-close:hover{background:rgba(255,255,255,.2);color:#fff;}
+
+/* FEEDBACK MODAL */
+.fb-form{display:flex;flex-direction:column;gap:12px;margin-top:8px;}
+.fb-form input,.fb-form textarea{padding:11px 14px;border:1.5px solid rgba(255,255,255,.15);border-radius:10px;font-family:var(--fb);font-size:14px;color:#fff;outline:none;transition:border-color .15s;resize:none;background:rgba(255,255,255,.08);}.fb-form input::placeholder,.fb-form textarea::placeholder{color:rgba(255,255,255,.35);}.fb-form input:focus,.fb-form textarea:focus{border-color:rgba(226,75,74,.6);}
+.fb-form textarea{height:100px;}
+.fb-submit{padding:12px;background:var(--red);color:#fff;border:none;border-radius:10px;font-family:var(--fd);font-size:16px;font-weight:700;cursor:pointer;transition:background .15s;letter-spacing:.5px;}.fb-submit:hover{background:var(--rdark);}
+
+.hfooter{
+  text-align:center;padding:16px 20px 0;font-size:11px;
+  color:rgba(255,255,255,.18);position:relative;z-index:2;
+}
+
+/* ════════════════════════════════
+   PAGE 2 — LOCATION
+════════════════════════════════ */
+#p2{background:linear-gradient(150deg,#0d1f3c 0%,#1a1040 40%,#0d3040 70%,#0a2820 100%);}
+.ph{background:rgba(255,255,255,.07);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.1);padding:16px 22px;display:flex;align-items:center;gap:14px;flex-shrink:0;}
+.back{
+  width:38px;height:38px;border-radius:10px;border:none;
+  background:rgba(255,255,255,.1);color:#fff;font-size:18px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:background .15s;flex-shrink:0;
+}
+.back:hover{background:rgba(255,255,255,.2);}
+.ph h2{font-family:var(--fd);font-size:20px;font-weight:700;color:#fff;letter-spacing:1px;text-transform:uppercase;}
+.ph p{font-size:12px;color:rgba(255,255,255,.45);margin-top:2px;}
+
+.p2body{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:32px 24px;gap:20px;overflow-y:auto;
+}
+.p2t{font-family:var(--fd);font-size:30px;font-weight:700;color:#fff;text-align:center;}
+.p2s{font-size:14px;color:rgba(255,255,255,.5);text-align:center;margin-top:3px;}
+
+/* GPS CARD */
+.gps-card{width:100%;max-width:480px;background:rgba(255,255,255,.08);backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,.15);border-radius:var(--radius);padding:22px 24px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:16px;box-shadow:0 4px 20px rgba(0,0,0,.2);}
+.gps-card:hover{border-color:rgba(226,75,74,.7);background:rgba(226,75,74,.12);transform:translateY(-2px);}
+.gc-ico{width:54px;height:54px;border-radius:14px;background:rgba(226,75,74,.18);border:1px solid rgba(226,75,74,.35);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
+.gc-t{font-size:16px;font-weight:500;color:#fff;}
+.gc-s{font-size:12px;color:rgba(255,255,255,.5);margin-top:3px;line-height:1.45;}
+.gc-arr{margin-left:auto;font-size:22px;color:rgba(255,255,255,.4);}
+
+.or-div{display:flex;align-items:center;gap:14px;width:100%;max-width:480px;color:rgba(255,255,255,.4);font-size:13px;}
+.or-div::before,.or-div::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.12);}
+
+/* SEARCH BAR */
+.loc-search{width:100%;max-width:480px;}
+.ls-wrap{display:flex;gap:0;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.18);border-radius:var(--radius);overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.2);transition:border-color .2s;}
+.ls-wrap:focus-within{border-color:rgba(226,75,74,.6);}
+.ls-ico{padding:0 16px;font-size:18px;display:flex;align-items:center;color:rgba(255,255,255,.5);}
+.ls-inp{
+  flex:1;border:none;outline:none;font-family:var(--fb);font-size:15px;
+  color:#fff;padding:16px 4px;background:transparent;
+}
+.ls-inp::placeholder{color:rgba(255,255,255,.35);}
+.ls-btn{padding:16px 22px;background:var(--red);color:#fff;border:none;font-family:var(--fd);font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.5px;transition:background .15s;white-space:nowrap;}.ls-btn:hover{background:var(--rdark);}
+
+/* suggestion chips */
+.town-chips{display:flex;flex-wrap:wrap;gap:8px;max-width:480px;margin-top:4px;}
+.tchip{padding:6px 14px;border-radius:20px;font-size:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.7);cursor:pointer;transition:all .15s;}.tchip:hover{background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.35);}
+
+/* fallback notice */
+.gps-denied{width:100%;max-width:480px;background:rgba(186,117,23,.15);border:1px solid rgba(186,117,23,.4);border-radius:var(--radius);padding:12px 16px;font-size:12px;color:#f5c06b;display:none;text-align:center;}
+
+/* ════════════════════════════════
+   PAGE 3 — SERVICES
+════════════════════════════════ */
+#p3{background:linear-gradient(160deg,#0A1628 0%,#1a0d3a 35%,#0d2840 65%,#0a1e18 100%);}
+.p3h{background:rgba(255,255,255,.06);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.08);padding:12px 18px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.p3sbar{
+  flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);
+  border-radius:10px;padding:9px 14px;display:flex;align-items:center;gap:8px;
+}
+.p3sbar input{flex:1;background:transparent;border:none;outline:none;color:#fff;font-family:var(--fb);font-size:14px;}
+.p3sbar input::placeholder{color:rgba(255,255,255,.38);}
+.p3sbar .ico{color:rgba(255,255,255,.4);font-size:15px;}
+
+/* context label */
+.ctx-bar{background:rgba(255,255,255,.05);padding:7px 20px;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.ctx-tag{
+  background:var(--red);color:#fff;padding:2px 10px;
+  border-radius:12px;font-size:11px;font-weight:500;margin-left:4px;
+}
+
+/* OVAL category grid */
+.cat-grid{display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px;background:rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;justify-content:center;}
+.ov{
+  padding:8px 20px;border-radius:50px;font-size:13px;font-weight:500;
+  cursor:pointer;border:1.5px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);
+  transition:all .18s;white-space:nowrap;display:flex;align-items:center;gap:6px;
+}
+.ov:hover{background:rgba(255,255,255,.18);color:#fff;border-color:rgba(255,255,255,.4);}
+.ov.active{color:#fff;border-color:transparent;transform:scale(1.04);}
+.ov.all.active{background:rgba(255,255,255,.25);}
+.ov.hospital.active{background:var(--red);}
+.ov.priv-hospital.active{background:#c0392b;}
+.ov.police.active{background:var(--blue);}
+.ov.fire.active{background:var(--amber);}
+.ov.pharmacy.active{background:var(--teal);}
+.ov.blood.active{background:var(--rdark);}
+.ov.college.active{background:var(--purple);}
+.ov.restaurant.active{background:var(--pink);}
+.ov.theater.active{background:#444441;}
+.ov.mall.active{background:var(--green);}
+
+/* results */
+.p3res{flex:1;overflow-y:auto;padding:12px 16px;}
+.rh{display:flex;align-items:center;justify-content:space-between;padding:6px 4px 10px;font-size:11px;color:rgba(255,255,255,.45);font-weight:500;text-transform:uppercase;letter-spacing:.5px;}.rb{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);padding:2px 10px;border-radius:12px;font-size:11px;}
+
+.rcard{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);backdrop-filter:blur(6px);padding:13px;margin-bottom:10px;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:12px;}.rcard:hover{border-color:rgba(226,75,74,.4);background:rgba(226,75,74,.1);transform:translateX(3px);}
+.ri{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.ri.hospital,.ri.priv-hospital{background:rgba(226,75,74,.2);}
+.ri.police{background:rgba(24,95,165,.2);}
+.ri.fire{background:rgba(186,117,23,.2);}
+.ri.pharmacy{background:rgba(15,110,86,.2);}
+.ri.blood{background:rgba(163,45,45,.2);}
+.ri.college{background:rgba(83,74,183,.2);}
+.ri.restaurant{background:rgba(212,83,126,.2);}
+.ri.theater{background:rgba(68,68,65,.3);}
+.ri.mall{background:rgba(59,109,17,.2);}
+.rinfo{flex:1;min-width:0;}
+.rname{font-size:14px;font-weight:500;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rmeta{display:flex;gap:10px;margin-top:3px;font-size:11.5px;color:rgba(255,255,255,.45);flex-wrap:wrap;}
+.rdist{font-weight:500;color:#4dd9ac;}
+.rcuisine{color:#f093b0;}
+.r24{color:#4dd9ac;font-weight:500;}
+.rpriv{color:#ff8a87;font-size:10px;font-weight:600;padding:1px 6px;background:rgba(226,75,74,.2);border:1px solid rgba(226,75,74,.3);border-radius:6px;}
+.rarr{color:rgba(255,255,255,.3);font-size:20px;flex-shrink:0;}
+.nores{text-align:center;padding:48px 20px;color:rgba(255,255,255,.4);font-size:14px;}
+
+/* ════════════════════════════════
+   PAGE 4 — MAP
+════════════════════════════════ */
+#p4{background:#000;}
+.p4top{
+  background:var(--navy);padding:14px 18px;
+  display:flex;align-items:center;gap:12px;z-index:10;flex-shrink:0;
+}
+.p4info{flex:1;min-width:0;}
+.p4name{font-size:15px;font-weight:500;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.p4addr{font-size:11px;color:rgba(255,255,255,.45);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.callbtn{
+  padding:8px 16px;background:var(--red);color:#fff;border:none;border-radius:9px;
+  font-family:var(--fb);font-size:13px;font-weight:500;cursor:pointer;
+  white-space:nowrap;text-decoration:none;display:flex;align-items:center;gap:5px;flex-shrink:0;
+}
+.callbtn:hover{background:var(--rdark);}
+.mapwrap{flex:1;position:relative;overflow:hidden;}
+#map{position:absolute;inset:0;width:100%;height:100%;}
+.msw{position:absolute;top:12px;left:12px;z-index:500;display:flex;gap:6px;}
+.msw button{
+  padding:6px 12px;font-size:11px;font-family:var(--fb);border-radius:7px;
+  border:1px solid rgba(0,0,0,.2);background:#fff;cursor:pointer;font-weight:500;
+}
+.msw button.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+.mic{
+  position:absolute;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:16px 20px;z-index:500;min-width:260px;max-width:92%;
+  box-shadow:0 8px 32px rgba(0,0,0,.2);display:none;
+}
+.mic.show{display:block;}
+.micn{font-family:var(--fd);font-size:16px;font-weight:700;color:var(--gray);}
+.mica{font-size:12px;color:var(--gmid);margin-top:3px;}
+.microw{display:flex;gap:10px;margin-top:10px;align-items:center;}
+.micd{font-size:13px;font-weight:500;color:var(--teal);}
+.mice{font-size:12px;color:var(--gmid);}
+.micnav{
+  margin-left:auto;padding:8px 16px;background:var(--red);color:#fff;
+  border:none;border-radius:8px;font-family:var(--fb);font-size:12px;font-weight:500;
+  cursor:pointer;text-decoration:none;white-space:nowrap;
+}
+.micnav:hover{background:var(--rdark);}
+.rload{
+  position:absolute;top:60px;left:50%;transform:translateX(-50%);
+  background:rgba(10,22,40,.85);color:#fff;font-size:12px;
+  padding:7px 18px;border-radius:20px;z-index:600;display:none;
+  font-family:var(--fb);white-space:nowrap;
+}
+.rload.show{display:block;}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:28px;left:50%;
+  transform:translateX(-50%) translateY(80px);
+  background:var(--gray);color:#fff;padding:10px 22px;border-radius:24px;
+  font-size:13px;font-family:var(--fb);z-index:9999;
+  transition:transform .3s ease;white-space:nowrap;pointer-events:none;
+}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+@media(max-width:700px){
+  .hnav{padding:14px 18px;gap:10px;}
+  .ltxt{font-size:11px;letter-spacing:.8px;}
+  .stats{gap:20px;}
+  .fcards{grid-template-columns:1fr 1fr;}
+  .sosnav a{padding:6px 9px;font-size:11px;}
+  .nav-link{padding:6px 10px;font-size:12px;}
+  .nav-sep{display:none;}
+  .cat-grid{gap:7px;}
+}
+@media(max-width:480px){
+  .fcards{grid-template-columns:1fr;}
+  .sosnav{display:none;}
+  .hero-h1{font-size:clamp(36px,10vw,52px);}
+}
+
+/* ── STAR RATING POPUP ── */
+.star-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:8000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
+.star-overlay.show{display:flex;}
+.star-box{background:linear-gradient(145deg,#0d1f3c,#1a1040);border:1px solid rgba(255,255,255,.15);border-radius:24px;padding:36px 32px;max-width:360px;width:90%;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.55);}
+.star-box h3{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:#fff;margin-bottom:8px;}
+.star-box p{font-size:13px;color:rgba(255,255,255,.5);margin-bottom:22px;line-height:1.55;}
+.stars{display:flex;justify-content:center;gap:10px;margin-bottom:8px;}
+.star{font-size:42px;cursor:pointer;transition:transform .15s,color .15s;color:rgba(255,255,255,.2);user-select:none;line-height:1;}
+.star.lit{color:#f5c06b;}
+.star:hover{transform:scale(1.25);}
+.star-lbl{font-size:13px;color:rgba(255,255,255,.5);height:18px;margin-bottom:18px;min-height:18px;}
+.star-acts{display:flex;gap:10px;justify-content:center;}
+.star-skip{padding:10px 20px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.15);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .15s;}
+.star-skip:hover{background:rgba(255,255,255,.15);}
+.star-sub{padding:10px 24px;background:#E24B4A;color:#fff;border:none;border-radius:10px;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:background .15s;letter-spacing:.5px;}
+.star-sub:hover{background:#A32D2D;}
+</style>
+</head>
+<body>
+
+<!-- ═══ GLOBAL NAV (visible on all pages) ═══ -->
+<nav class="global-nav">
+  <div class="gnav-links">
+    <span class="gnav-link active-pg" id="gnHome" onclick="goHome()">🏠 Home</span>
+    <span class="gnav-link" id="gnAbout" onclick="openAbout()">About</span>
+    <span class="gnav-link" id="gnContact" onclick="openFeedback()">Contact</span>
+  </div>
+  <div class="gnav-sos">
+    <a href="tel:108" class="gs-amb">📞 108</a>
+    <a href="tel:100" class="gs-pol">📞 100</a>
+    <a href="tel:101" class="gs-fir">📞 101</a>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════
+     PAGE 1 — HOME
+═══════════════════════════════════ -->
+<div class="page active" id="p1">
+  <div class="home-bg">
+    <div class="blob blob1"></div>
+    <div class="blob blob2"></div>
+    <div class="blob blob3"></div>
+    <div class="blob blob4"></div>
+  </div>
+  <div class="home-wrap">
+
+    <nav class="hnav">
+      <div class="nlogo">
+        <div class="pdot"></div>
+        <span class="ltxt">Emergency Resource Locator</span>
+      </div>
+    </nav>
+
+    <div class="hero">
+      <h1 class="hero-h1">
+        Find Help Fast<br>
+        <span class="navy-line">in Emergencies</span>
+      </h1>
+
+      <button class="cta" onclick="goTo('p2')">
+        Get Started <span class="cta-arr">→</span>
+      </button>
+
+      <div class="stats">
+        <div><div class="stn">80+</div><div class="stl">Locations</div></div>
+        <div><div class="stn">12</div><div class="stl">Towns</div></div>
+        <div><div class="stn">9</div><div class="stl">Categories</div></div>
+        <div><div class="stn">100</div><div class="stl">km Range</div></div>
+      </div>
+
+      <div class="fcards">
+        <div class="fc"><div class="fc-icon">📍</div><div class="fc-t">Smart Location</div><div class="fc-b">GPS detection or search your town — results sort nearest first.</div></div>
+        <div class="fc"><div class="fc-icon">🛣</div><div class="fc-t">Real Road Routing</div><div class="fc-b">Actual driving routes via OSRM with distance &amp; ETA.</div></div>
+        <div class="fc"><div class="fc-icon">📞</div><div class="fc-t">One-Tap Call</div><div class="fc-b">108 Ambulance · 100 Police · 101 Fire — instant calling.</div></div>
+      </div>
+    </div>
+
+    <div class="hfooter">© 2026 Emergency Resource Locator · Built for Rajahmundry, AP</div>
+  </div>
+</div>
+
+<!-- ABOUT MODAL -->
+<div class="modal-overlay" id="aboutModal" onclick="if(event.target===this)closeAbout()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAbout()">✕</button>
+    <h2>👉 Why Use Emergency Resource Locator?</h2>
+    <p>During emergencies, finding the right help quickly can save lives. This platform is designed to provide fast and reliable access to essential services. Whether it's medical assistance, law enforcement, or basic needs like pharmacies, everything is just a click away.</p>
+    <p>Built using modern web technologies and real-time mapping, this system ensures accuracy, speed, and ease of use.</p>
+    <p style="margin-top:14px;font-size:12px;color:#bbb;">Stack: Leaflet.js · OpenStreetMap · OSRM Routing · Google Fonts</p>
+    <p style="font-size:12px;color:#bbb;">© 2026 · Built for Rajahmundry, Andhra Pradesh</p>
+  </div>
+</div>
+
+<!-- FEEDBACK MODAL -->
+<div class="modal-overlay" id="feedbackModal" onclick="if(event.target===this)closeFeedback()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeFeedback()">✕</button>
+    <h2>👉 Get in Touch</h2>
+    <p style="font-size:13px;color:var(--gmid);margin-bottom:4px;">We'd love to hear from you. All fields are required.</p>
+    <div class="fb-form">
+      <input type="email" id="fbEmail" placeholder="Your email address *" required/>
+      <textarea id="fbMsg" placeholder="Describe your issue or message… *" required></textarea>
+      <button class="fb-submit" onclick="submitFeedback()">Send Feedback ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     PAGE 2 — LOCATION
+═══════════════════════════════════ -->
+<div class="page" id="p2">
+  <div class="ph">
+    <button class="back" onclick="goBack('p1')">←</button>
+    <div>
+      <h2>Set Your Location</h2>
+      <p>GPS or type your town / place name</p>
+    </div>
+  </div>
+
+  <div class="p2body">
+    <p class="p2t">Where are you?</p>
+    <p class="p2s">We use this to find and sort the nearest services</p>
+
+    <!-- GPS -->
+    <div class="gps-card" onclick="tryGPS()">
+      <div class="gc-ico">📍</div>
+      <div>
+        <div class="gc-t">Use My Current Location</div>
+        <div class="gc-s">Auto-detect via GPS for the most accurate results</div>
+      </div>
+      <div class="gc-arr">›</div>
+    </div>
+
+    <div class="or-div">or type your town / place</div>
+
+    <!-- SINGLE SEARCH BAR -->
+    <div class="loc-search">
+      <div class="ls-wrap">
+        <div class="ls-ico">🔍</div>
+        <input class="ls-inp" id="locInput" placeholder="e.g. Kakinada, Eluru, hospital…" onkeydown="if(event.key==='Enter')doLocSearch()"/>
+        <button class="ls-btn" onclick="doLocSearch()">Search →</button>
+      </div>
+    </div>
+
+    <!-- Quick town chips -->
+    <div class="town-chips">
+      <div class="tchip" onclick="quickTown('Rajahmundry',17.0005,81.8040)">Rajahmundry</div>
+      <div class="tchip" onclick="quickTown('Kakinada',16.9891,82.2475)">Kakinada</div>
+      <div class="tchip" onclick="quickTown('Eluru',16.7107,81.0952)">Eluru</div>
+      <div class="tchip" onclick="quickTown('Bhimavaram',16.5440,81.5215)">Bhimavaram</div>
+      <div class="tchip" onclick="quickTown('Amalapuram',16.5750,82.0050)">Amalapuram</div>
+      <div class="tchip" onclick="quickTown('Mandapeta',16.8640,81.9290)">Mandapeta</div>
+      <div class="tchip" onclick="quickTown('Tuni',17.3590,82.5470)">Tuni</div>
+      <div class="tchip" onclick="quickTown('Kovvur',17.0160,81.7270)">Kovvur</div>
+    </div>
+
+    <div class="gps-denied" id="gpsDenied">
+      GPS permission denied. Please type your town or tap a chip above.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     PAGE 3 — SERVICES
+═══════════════════════════════════ -->
+<div class="page" id="p3">
+  <div class="p3h">
+    <button class="back" onclick="goBack('p2')">←</button>
+    <div class="p3sbar">
+      <span class="ico">🔍</span>
+      <input id="p3q" placeholder="Search within services…" oninput="renderSvc()"/>
+    </div>
+  </div>
+
+  <!-- context label -->
+  <div class="ctx-bar" id="ctxBar">
+    Showing results for <span class="ctx-tag" id="ctxTag">All</span>
+  </div>
+
+  <!-- OVAL CATEGORY BUTTONS -->
+  <div class="cat-grid">
+    <div class="ov all active" onclick="setCat('all')">🗂 All</div>
+    <div class="ov hospital" onclick="setCat('hospital')">🏥 Govt Hospital</div>
+    <div class="ov priv-hospital" onclick="setCat('priv-hospital')">🏨 Private Hospital</div>
+    <div class="ov police" onclick="setCat('police')">🚔 Police</div>
+    <div class="ov fire" onclick="setCat('fire')">🚒 Fire</div>
+    <div class="ov pharmacy" onclick="setCat('pharmacy')">💊 Pharmacy</div>
+    <div class="ov blood" onclick="setCat('blood')">🩸 Blood Bank</div>
+    <div class="ov college" onclick="setCat('college')">🎓 College</div>
+    <div class="ov restaurant" onclick="setCat('restaurant')">🍽 Restaurant</div>
+    <div class="ov theater" onclick="setCat('theater')">🎬 Theater</div>
+    <div class="ov mall" onclick="setCat('mall')">🛍 Mall</div>
+  </div>
+
+  <div class="p3res">
+    <div class="rh">Nearby Services <span class="rb" id="cnt">0</span></div>
+    <div id="p3list"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     PAGE 4 — MAP
+═══════════════════════════════════ -->
+<div class="page" id="p4">
+  <div class="p4top">
+    <button class="back" onclick="goBack('p3')">←</button>
+    <div class="p4info">
+      <div class="p4name" id="p4n">—</div>
+      <div class="p4addr" id="p4a">—</div>
+    </div>
+    <a href="tel:" class="callbtn" id="p4call">📞 Call</a>
+  </div>
+  <div class="mapwrap">
+    <div id="map"></div>
+    <div class="rload" id="rload">📍 Fetching road route…</div>
+    <div class="msw">
+      <button id="bStr" class="active" onclick="setMapStyle('street')">🗺 Street</button>
+      <button id="bSat" onclick="setMapStyle('satellite')">🛰 Satellite</button>
+      <button id="bTop" onclick="setMapStyle('topo')">🏔 Topo</button>
+    </div>
+    <div class="mic" id="mic">
+      <div class="micn" id="micN">—</div>
+      <div class="mica" id="micA">—</div>
+      <div class="microw">
+        <div><div class="micd" id="micD"></div><div class="mice" id="micE"></div></div>
+        <a href="#" class="micnav" id="micNav" target="_blank">Get Directions ↗</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+// ── NAVIGATION ──
+let cur='p1';
+function updateGlobalNav(id){
+  // Highlight Home link only when on p1
+  document.getElementById('gnHome').classList.toggle('active-pg', id==='p1');
+}
+function goTo(id){
+  const p=document.getElementById(cur),n=document.getElementById(id);
+  p.classList.add('out');
+  setTimeout(()=>{p.classList.remove('active','out');},400);
+  n.classList.add('active');cur=id;
+  updateGlobalNav(id);
+  if(id==='p4')setTimeout(()=>{if(mapObj)mapObj.invalidateSize();},460);
+}
+function goBack(id){
+  const fromMap = cur==='p4';
+  const p=document.getElementById(cur),n=document.getElementById(id);
+  p.style.cssText='opacity:0;transform:translateX(48px);transition:opacity .38s,transform .38s;';
+  setTimeout(()=>{p.classList.remove('active');p.style.cssText='';},400);
+  n.style.cssText='opacity:0;transform:translateX(-48px);';
+  n.classList.add('active');
+  setTimeout(()=>{n.style.cssText='transition:opacity .38s,transform .38s;opacity:1;transform:translateX(0);';},10);
+  setTimeout(()=>{n.style.cssText='';},420);
+  cur=id;
+  updateGlobalNav(id);
+  // Show star rating when leaving map page
+  if(fromMap) setTimeout(showStarRating, 500);
+}
+function goHome(){
+  if(cur==='p1'){document.getElementById('p1').scrollTo({top:0,behavior:'smooth'});return;}
+  // Go back to p1 with reverse animation
+  const p=document.getElementById(cur),n=document.getElementById('p1');
+  p.style.cssText='opacity:0;transform:translateX(48px);transition:opacity .38s,transform .38s;';
+  setTimeout(()=>{p.classList.remove('active');p.style.cssText='';},400);
+  n.style.cssText='opacity:0;transform:translateX(-48px);';
+  n.classList.add('active');
+  setTimeout(()=>{n.style.cssText='transition:opacity .38s,transform .38s;opacity:1;transform:translateX(0);';},10);
+  setTimeout(()=>{n.style.cssText='';},420);
+  cur='p1';
+  updateGlobalNav('p1');
+}
+
+// ── TOWN MAP ──
+const TOWNS={
+  'rajahmundry':[17.0005,81.8040],
+  'kakinada':[16.9891,82.2475],
+  'eluru':[16.7107,81.0952],
+  'bhimavaram':[16.5440,81.5215],
+  'amalapuram':[16.5750,82.0050],
+  'pithapuram':[17.1140,82.2530],
+  'tuni':[17.3590,82.5470],
+  'narsapur':[16.4344,81.6966],
+  'mandapeta':[16.8640,81.9290],
+  'ramachandrapuram':[16.8360,82.0320],
+  'rcp':[16.8360,82.0320],
+  'kovvur':[17.0160,81.7270],
+  'samarlakota':[17.0530,81.9000]
+};
+
+// ── DATA — all places with TOWN tag for filtering ──
+const PLACES=[
+  // ── RAJAHMUNDRY GOVT HOSPITALS ──
+  {name:"Government General Hospital",type:"hospital",town:"rajahmundry",lat:17.0005,lng:81.8040,address:"Main Road, Rajahmundry",phone:"0883-2423201"},
+  {name:"KMC Hospital (Govt)",type:"hospital",town:"rajahmundry",lat:17.0075,lng:81.8005,address:"Kota Road, Rajahmundry",phone:"0883-2440000"},
+  {name:"ESI Hospital Rajahmundry",type:"hospital",town:"rajahmundry",lat:17.0040,lng:81.8120,address:"Industrial Area, Rajahmundry",phone:"0883-2470000"},
+
+  // ── RAJAHMUNDRY PRIVATE HOSPITALS ──
+  {name:"Asram Hospital (Private)",type:"priv-hospital",town:"rajahmundry",lat:17.0100,lng:81.8150,address:"Asram Road, Rajahmundry",phone:"0883-2422228",priv:true},
+  {name:"Srinivasa Hospital (Private)",type:"priv-hospital",town:"rajahmundry",lat:17.0060,lng:81.7960,address:"T Nagar, Rajahmundry",phone:"0883-2473636",priv:true},
+  {name:"Apollo Clinic Rajahmundry",type:"priv-hospital",town:"rajahmundry",lat:17.0130,lng:81.8220,address:"Morampudi Jn",phone:"1800-102-4244",priv:true},
+  {name:"KIMS Hospital Rajahmundry",type:"priv-hospital",town:"rajahmundry",lat:17.0090,lng:81.8050,address:"RTC Complex Road",phone:"0883-2456000",priv:true},
+  {name:"Star Hospital Rajahmundry",type:"priv-hospital",town:"rajahmundry",lat:17.0050,lng:81.8180,address:"Innespet, Rajahmundry",phone:"0883-2466000",priv:true},
+  {name:"Vijaya Hospital",type:"priv-hospital",town:"rajahmundry",lat:17.0115,lng:81.7990,address:"Kota Road, Rajahmundry",phone:"0883-2412000",priv:true},
+  {name:"Rajahmundry Heart Centre",type:"priv-hospital",town:"rajahmundry",lat:17.0082,lng:81.8090,address:"Godavari Bund Road",phone:"0883-2478000",priv:true},
+
+  // ── KAKINADA HOSPITALS ──
+  {name:"Government General Hospital Kakinada",type:"hospital",town:"kakinada",lat:16.9891,lng:82.2475,address:"Main Road, Kakinada",phone:"0884-2362010"},
+  {name:"Konaseema Institute of Medical Sciences",type:"priv-hospital",town:"kakinada",lat:16.9750,lng:82.2300,address:"Amalapuram Road, Kakinada",phone:"0884-2374455",priv:true},
+  {name:"Sai Hospitals Kakinada",type:"priv-hospital",town:"kakinada",lat:16.9880,lng:82.2510,address:"Suryarao Pet, Kakinada",phone:"0884-2366000",priv:true},
+  {name:"Aditya Hospital Kakinada",type:"priv-hospital",town:"kakinada",lat:16.9860,lng:82.2440,address:"Main Road, Kakinada",phone:"0884-2380000",priv:true},
+
+  // ── ELURU HOSPITALS ──
+  {name:"Government General Hospital Eluru",type:"hospital",town:"eluru",lat:16.7107,lng:81.0952,address:"Eluru Main Road",phone:"08812-227444"},
+  {name:"Siddhartha Hospital Eluru",type:"priv-hospital",town:"eluru",lat:16.7120,lng:81.0980,address:"Collector Office Rd, Eluru",phone:"08812-225000",priv:true},
+  {name:"NRI Academy of Sciences Eluru",type:"priv-hospital",town:"eluru",lat:16.7090,lng:81.0920,address:"Eluru Town",phone:"08812-223000",priv:true},
+
+  // ── BHIMAVARAM HOSPITALS ──
+  {name:"GSL Medical College Hospital",type:"hospital",town:"bhimavaram",lat:16.5440,lng:81.5215,address:"NH-16, Bhimavaram",phone:"08816-223344"},
+  {name:"Bhimavaram Government Hospital",type:"hospital",town:"bhimavaram",lat:16.5430,lng:81.5200,address:"Town Centre, Bhimavaram",phone:"08816-222222"},
+  {name:"Vijaya Hospital Bhimavaram",type:"priv-hospital",town:"bhimavaram",lat:16.5460,lng:81.5240,address:"Main Road, Bhimavaram",phone:"08816-224000",priv:true},
+  {name:"Srinivasa Hospital Bhimavaram",type:"priv-hospital",town:"bhimavaram",lat:16.5420,lng:81.5180,address:"Bus Stand Rd, Bhimavaram",phone:"08816-226000",priv:true},
+
+  // ── AMALAPURAM ──
+  {name:"Government Hospital Amalapuram",type:"hospital",town:"amalapuram",lat:16.5750,lng:82.0050,address:"Amalapuram Town",phone:"08856-232222"},
+  {name:"Sai Baba Hospital Amalapuram",type:"priv-hospital",town:"amalapuram",lat:16.5760,lng:82.0070,address:"Main Road, Amalapuram",phone:"08856-233000",priv:true},
+
+  // ── MANDAPETA ──
+  {name:"CHC Mandapeta",type:"hospital",town:"mandapeta",lat:16.8640,lng:81.9290,address:"Mandapeta Town",phone:"08855-255555"},
+
+  // ── KOVVUR ──
+  {name:"PHC Kovvur",type:"hospital",town:"kovvur",lat:17.0160,lng:81.7270,address:"Kovvur Town",phone:"08855-244444"},
+
+  // ── POLICE ──
+  {name:"City Police Station",type:"police",town:"rajahmundry",lat:17.0050,lng:81.8100,address:"Police Lines Road, Rajahmundry",phone:"100"},
+  {name:"One Town Police Station",type:"police",town:"rajahmundry",lat:17.0020,lng:81.8010,address:"One Town, Rajahmundry",phone:"0883-2434567"},
+  {name:"Kakinada Police Commissionerate",type:"police",town:"kakinada",lat:16.9902,lng:82.2474,address:"Jawaharlal St, Kakinada",phone:"0884-2362222"},
+  {name:"Eluru Police Station",type:"police",town:"eluru",lat:16.7100,lng:81.0940,address:"Collector Office Rd, Eluru",phone:"08812-223100"},
+  {name:"Bhimavaram Police Station",type:"police",town:"bhimavaram",lat:16.5448,lng:81.5230,address:"Police Station Rd, Bhimavaram",phone:"08816-222100"},
+  {name:"Amalapuram Police Station",type:"police",town:"amalapuram",lat:16.5760,lng:82.0060,address:"Police Road, Amalapuram",phone:"08856-232100"},
+  {name:"Mandapeta Police Station",type:"police",town:"mandapeta",lat:16.8650,lng:81.9300,address:"Police Station Rd, Mandapeta",phone:"08855-255100"},
+  {name:"Kovvur Police Station",type:"police",town:"kovvur",lat:17.0170,lng:81.7280,address:"Main Road, Kovvur",phone:"08855-244100"},
+  {name:"Tuni Police Station",type:"police",town:"tuni",lat:17.3600,lng:82.5460,address:"Police Colony, Tuni",phone:"08854-222100"},
+  {name:"Ramachandrapuram Police",type:"police",town:"ramachandrapuram",lat:16.8370,lng:82.0330,address:"Police Colony, RCP",phone:"08855-220100"},
+
+  // ── FIRE ──
+  {name:"Fire Station – East Rajahmundry",type:"fire",town:"rajahmundry",lat:17.0020,lng:81.7990,address:"Kota Road, Rajahmundry",phone:"101"},
+  {name:"Fire Station – West Rajahmundry",type:"fire",town:"rajahmundry",lat:17.0080,lng:81.7870,address:"Godavari Bridge Rd",phone:"101"},
+  {name:"Kakinada Fire Station",type:"fire",town:"kakinada",lat:16.9945,lng:82.2450,address:"Nellore Pet, Kakinada",phone:"101"},
+  {name:"Eluru Fire Station",type:"fire",town:"eluru",lat:16.7125,lng:81.0970,address:"Fire Station Rd, Eluru",phone:"101"},
+  {name:"Bhimavaram Fire Station",type:"fire",town:"bhimavaram",lat:16.5460,lng:81.5240,address:"Fire Colony, Bhimavaram",phone:"101"},
+  {name:"Amalapuram Fire Station",type:"fire",town:"amalapuram",lat:16.5740,lng:82.0040,address:"Fire Station Rd, Amalapuram",phone:"101"},
+  {name:"Mandapeta Fire Station",type:"fire",town:"mandapeta",lat:16.8630,lng:81.9280,address:"Fire Depot, Mandapeta",phone:"101"},
+  {name:"Tuni Fire Station",type:"fire",town:"tuni",lat:17.3580,lng:82.5480,address:"Fire Dept, Tuni",phone:"101"},
+
+  // ── PHARMACY ──
+  {name:"Apollo Pharmacy",type:"pharmacy",town:"rajahmundry",lat:17.0035,lng:81.8070,address:"RTC Complex, Rajahmundry",phone:"",open24:true},
+  {name:"MedPlus Rajahmundry",type:"pharmacy",town:"rajahmundry",lat:17.0110,lng:81.7950,address:"Auto Nagar, Rajahmundry",phone:"",open24:true},
+  {name:"Sri Balaji Medical",type:"pharmacy",town:"rajahmundry",lat:17.0090,lng:81.8200,address:"LIC Colony, Rajahmundry",phone:"",open24:false},
+  {name:"MedPlus Kakinada",type:"pharmacy",town:"kakinada",lat:16.9880,lng:82.2490,address:"Gandhi Nagar, Kakinada",phone:"",open24:true},
+  {name:"Apollo Pharmacy Eluru",type:"pharmacy",town:"eluru",lat:16.7090,lng:81.0930,address:"Bus Stand Rd, Eluru",phone:"",open24:false},
+  {name:"MedPlus Bhimavaram",type:"pharmacy",town:"bhimavaram",lat:16.5435,lng:81.5210,address:"Main Bazaar, Bhimavaram",phone:"",open24:true},
+
+  // ── BLOOD BANKS ──
+  {name:"Blood Bank – GGH Rajahmundry",type:"blood",town:"rajahmundry",lat:17.0007,lng:81.8042,address:"GGH Campus, Rajahmundry",phone:"0883-2423201"},
+  {name:"Red Cross Blood Centre",type:"blood",town:"rajahmundry",lat:17.0145,lng:81.8175,address:"Innespet, Rajahmundry",phone:"0883-2460000"},
+  {name:"Blood Bank – GGH Kakinada",type:"blood",town:"kakinada",lat:16.9893,lng:82.2470,address:"GGH Campus, Kakinada",phone:"0884-2362010"},
+  {name:"Blood Bank Eluru GGH",type:"blood",town:"eluru",lat:16.7108,lng:81.0955,address:"GGH Eluru",phone:"08812-227444"},
+  {name:"Blood Bank Amalapuram",type:"blood",town:"amalapuram",lat:16.5751,lng:82.0052,address:"Govt Hospital Campus",phone:"08856-232222"},
+  {name:"Blood Bank RCP",type:"blood",town:"ramachandrapuram",lat:16.8362,lng:82.0322,address:"Govt Hospital, RCP",phone:"08855-220444"},
+
+  // ── COLLEGES ──
+  {name:"Adikavi Nannaya University",type:"college",town:"rajahmundry",lat:17.0028,lng:81.8079,address:"University Campus, Rajahmundry",phone:"0883-2461148"},
+  {name:"Rajahmundry Engineering College",type:"college",town:"rajahmundry",lat:17.0210,lng:81.8300,address:"Bommuru, Rajahmundry",phone:"0883-2456789"},
+  {name:"Vasavi Degree College",type:"college",town:"rajahmundry",lat:17.0080,lng:81.8100,address:"Main Road, Rajahmundry",phone:"0883-2423456"},
+  {name:"St. Ann's College for Women",type:"college",town:"rajahmundry",lat:17.0120,lng:81.8050,address:"Innespet, Rajahmundry",phone:"0883-2477890"},
+  {name:"Siddhartha Degree College",type:"college",town:"rajahmundry",lat:17.0055,lng:81.8030,address:"Rajahmundry Town",phone:"0883-2412345"},
+  {name:"JNTU Kakinada",type:"college",town:"kakinada",lat:16.9891,lng:82.2350,address:"Kakinada Main Campus",phone:"0884-2300406"},
+  {name:"Aditya Engineering College",type:"college",town:"kakinada",lat:16.9750,lng:82.1980,address:"Surampalem, Kakinada",phone:"08852-252525"},
+  {name:"Kakinada Institute of Engineering",type:"college",town:"kakinada",lat:16.9800,lng:82.2100,address:"Korangi, Kakinada",phone:"0884-2386090"},
+  {name:"Vishnu Engineering College",type:"college",town:"bhimavaram",lat:16.5300,lng:81.5000,address:"Bhimavaram",phone:"08816-226666"},
+  {name:"Eluru College of Engineering",type:"college",town:"eluru",lat:16.7150,lng:81.1000,address:"Eluru Town",phone:"08812-230000"},
+
+  // ── RESTAURANTS ──
+  {name:"Nagarjuna Restaurant",type:"restaurant",town:"rajahmundry",lat:17.0048,lng:81.8055,address:"Main Road, Rajahmundry",phone:"0883-2461111",cuisine:"Andhra"},
+  {name:"Haritha Hotel (APTDC)",type:"restaurant",town:"rajahmundry",lat:17.0090,lng:81.8160,address:"Godavari Bund Rd",phone:"0883-2475088",cuisine:"Multi-cuisine"},
+  {name:"Annapoorna Restaurant",type:"restaurant",town:"rajahmundry",lat:17.0065,lng:81.8020,address:"RTC Complex",phone:"",cuisine:"Veg"},
+  {name:"Sai Ram Hotel",type:"restaurant",town:"rajahmundry",lat:17.0035,lng:81.8090,address:"Innespet, Rajahmundry",phone:"",cuisine:"Andhra"},
+  {name:"Hotel Rajamahendri",type:"restaurant",town:"rajahmundry",lat:17.0015,lng:81.8070,address:"Bus Stand Area",phone:"0883-2423000",cuisine:"Multi-cuisine"},
+  {name:"Pizza Hut Rajahmundry",type:"restaurant",town:"rajahmundry",lat:17.0118,lng:81.8215,address:"Morampudi Jn",phone:"1800-208-6262",cuisine:"Fast Food"},
+  {name:"Kamat Hotel Kakinada",type:"restaurant",town:"kakinada",lat:16.9905,lng:82.2480,address:"Main Road, Kakinada",phone:"0884-2375555",cuisine:"Veg"},
+  {name:"Hyderabad Biryani House",type:"restaurant",town:"kakinada",lat:16.9920,lng:82.2500,address:"Suryarao Pet, Kakinada",phone:"",cuisine:"Biryani"},
+  {name:"Grand Hotel Eluru",type:"restaurant",town:"eluru",lat:16.7112,lng:81.0960,address:"Eluru Main Road",phone:"08812-225555",cuisine:"Multi-cuisine"},
+  {name:"Sri Krishna Bhavan Bhimavaram",type:"restaurant",town:"bhimavaram",lat:16.5445,lng:81.5225,address:"Bhimavaram Town",phone:"",cuisine:"Veg"},
+
+  // ── THEATERS ──
+  {name:"Jagadamba Theater",type:"theater",town:"rajahmundry",lat:17.0042,lng:81.8048,address:"Theater Road, Rajahmundry",phone:"0883-2424444"},
+  {name:"Sri Rama Cinemas",type:"theater",town:"rajahmundry",lat:17.0068,lng:81.8012,address:"One Town, Rajahmundry",phone:"0883-2412121"},
+  {name:"Rajahmundry INOX Multiplex",type:"theater",town:"rajahmundry",lat:17.0115,lng:81.8210,address:"Morampudi Jn",phone:"08071-711111"},
+  {name:"Lakshmi Theater",type:"theater",town:"rajahmundry",lat:17.0058,lng:81.7975,address:"Kota Rd, Rajahmundry",phone:""},
+  {name:"Roopa Theater Kakinada",type:"theater",town:"kakinada",lat:16.9898,lng:82.2465,address:"Suryarao Pet, Kakinada",phone:"0884-2361234"},
+  {name:"PVR Kakinada",type:"theater",town:"kakinada",lat:16.9878,lng:82.2430,address:"Kakinada Mall",phone:"08071-711777"},
+  {name:"Sudarshan Theater Eluru",type:"theater",town:"eluru",lat:16.7118,lng:81.0965,address:"Main Road, Eluru",phone:"08812-222333"},
+  {name:"Vijaya Theater Bhimavaram",type:"theater",town:"bhimavaram",lat:16.5452,lng:81.5232,address:"Bhimavaram Town",phone:""},
+
+  // ── MALLS ──
+  {name:"Rajahmundry City Centre Mall",type:"mall",town:"rajahmundry",lat:17.0112,lng:81.8205,address:"Morampudi Jn, Rajahmundry",phone:"0883-2456000"},
+  {name:"Big Bazaar Rajahmundry",type:"mall",town:"rajahmundry",lat:17.0098,lng:81.8188,address:"Rajahmundry Main Rd",phone:"1800-200-2255"},
+  {name:"Reliance Smart Rajahmundry",type:"mall",town:"rajahmundry",lat:17.0062,lng:81.8035,address:"RTC Complex Area",phone:""},
+  {name:"V-Mart Rajahmundry",type:"mall",town:"rajahmundry",lat:17.0040,lng:81.8060,address:"Innespet, Rajahmundry",phone:""},
+  {name:"CMR Shopping Mall Kakinada",type:"mall",town:"kakinada",lat:16.9882,lng:82.2442,address:"Main Road, Kakinada",phone:"0884-2388888"},
+  {name:"Big Bazaar Kakinada",type:"mall",town:"kakinada",lat:16.9867,lng:82.2420,address:"Gandhi Nagar, Kakinada",phone:"1800-200-2255"},
+  {name:"CMR Shopping Eluru",type:"mall",town:"eluru",lat:16.7095,lng:81.0945,address:"Main Road, Eluru",phone:"08812-228888"},
+  {name:"D-Mart Bhimavaram",type:"mall",town:"bhimavaram",lat:16.5460,lng:81.5235,address:"NH-16, Bhimavaram",phone:""}
+];
+
+const TI={
+  hospital:{e:'🏥',c:'#E24B4A'},
+  'priv-hospital':{e:'🏨',c:'#c0392b'},
+  police:{e:'🚔',c:'#185FA5'},
+  fire:{e:'🚒',c:'#BA7517'},
+  pharmacy:{e:'💊',c:'#0F6E56'},
+  blood:{e:'🩸',c:'#A32D2D'},
+  college:{e:'🎓',c:'#534AB7'},
+  restaurant:{e:'🍽',c:'#D4537E'},
+  theater:{e:'🎬',c:'#444441'},
+  mall:{e:'🛍',c:'#3B6D11'}
+};
+
+// ── STATE ──
+let uLat=null,uLng=null;
+let sCat='all';
+let searchTown=''; // town-specific filter from page 2
+let searchText=''; // free text filter from page 2
+let mapObj=null,uMark=null,rLine=null,aMark=null,aRAF=null;
+let pMarks=[],mapOK=false,activeLayer='street',tiles={};
+
+// ── MAP ──
+function initMap(){
+  if(mapOK)return;mapOK=true;
+  mapObj=L.map('map',{zoomControl:true}).setView([17.0005,81.8040],9);
+  tiles={
+    street:L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}),
+    satellite:L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'© Esri',maxZoom:19}),
+    topo:L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{attribution:'© OpenTopoMap',maxZoom:17})
+  };
+  tiles.street.addTo(mapObj);
+}
+function setMapStyle(s){
+  if(!mapObj)return;
+  mapObj.removeLayer(tiles[activeLayer]);tiles[s].addTo(mapObj);activeLayer=s;
+  ['Str','Sat','Top'].forEach((x,i)=>{
+    document.getElementById('b'+x).classList.toggle('active',['street','satellite','topo'][i]===s);
+  });
+}
+
+// ── LOCATION ──
+function tryGPS(){
+  if(!navigator.geolocation){showGPSDenied();return;}
+  showToast('Detecting GPS…');
+  navigator.geolocation.getCurrentPosition(
+    p=>{
+      uLat=p.coords.latitude;uLng=p.coords.longitude;
+      searchTown='';searchText='';
+      showToast('📍 GPS location set!');
+      setCat('all');renderSvc();goTo('p3');
+      document.getElementById('ctxTag').textContent='Near You';
+    },
+    ()=>{showGPSDenied();}
+  ,{enableHighAccuracy:true,timeout:10000});
+}
+function showGPSDenied(){
+  document.getElementById('gpsDenied').style.display='block';
+  showToast('GPS denied. Type your town below.');
+}
+function doLocSearch(){
+  const val=document.getElementById('locInput').value.trim();
+  if(!val){showToast('Please enter a town or place name.');return;}
+  const key=val.toLowerCase();
+  // Check if it matches a known town
+  const match=Object.keys(TOWNS).find(t=>key.includes(t)||t.includes(key));
+  if(match){
+    const[lat,lng]=TOWNS[match];
+    uLat=lat;uLng=lng;searchTown=match;searchText='';
+    const dispName=match.charAt(0).toUpperCase()+match.slice(1);
+    document.getElementById('ctxTag').textContent=dispName;
+    showToast('📍 Showing all places in '+dispName);
+  } else {
+    // Free text search across all places
+    searchTown='';searchText=key;
+    document.getElementById('ctxTag').textContent='"'+val+'"';
+    showToast('🔍 Searching for "'+val+'"');
+  }
+  setCat('all');renderSvc();goTo('p3');
+}
+function quickTown(name,lat,lng){
+  uLat=lat;uLng=lng;
+  searchTown=name.toLowerCase();searchText='';
+  document.getElementById('locInput').value=name;
+  document.getElementById('ctxTag').textContent=name;
+  showToast('📍 Showing all places in '+name);
+  setCat('all');renderSvc();goTo('p3');
+}
+function placeUMark(){
+  if(!mapObj||!uLat)return;
+  if(uMark)mapObj.removeLayer(uMark);
+  uMark=L.marker([uLat,uLng],{icon:L.divIcon({
+    className:'',
+    html:`<div style="width:16px;height:16px;border-radius:50%;background:#185FA5;border:3px solid #fff;box-shadow:0 0 0 5px rgba(24,95,165,.22)"></div>`,
+    iconSize:[16,16],iconAnchor:[8,8]
+  })}).addTo(mapObj).bindPopup('<b>Your location</b>').openPopup();
+}
+
+// ── DISTANCE ──
+function hav(a1,o1,a2,o2){
+  const R=6371,da=(a2-a1)*Math.PI/180,doo=(o2-o1)*Math.PI/180;
+  const a=Math.sin(da/2)**2+Math.cos(a1*Math.PI/180)*Math.cos(a2*Math.PI/180)*Math.sin(doo/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function dLabel(p){
+  if(!uLat)return'';
+  const d=hav(uLat,uLng,p.lat,p.lng);
+  return d<1?`${Math.round(d*1000)} m away`:`${d.toFixed(1)} km away`;
+}
+
+// ── SERVICES ──
+function setCat(c){
+  sCat=c;
+  document.querySelectorAll('.ov').forEach(o=>o.classList.remove('active'));
+  const el=document.querySelector('.ov.'+c.replace(/[^a-z-]/g,''));
+  if(el)el.classList.add('active');
+  renderSvc();
+}
+
+function renderSvc(){
+  const q=(document.getElementById('p3q')||{value:''}).value.toLowerCase();
+
+  let list=PLACES.filter(p=>{
+    // Category filter
+    const catOk = sCat==='all' || p.type===sCat;
+    if(!catOk)return false;
+
+    // Town filter (from page 2 search)
+    if(searchTown){
+      const inAddr=p.address.toLowerCase().includes(searchTown)||
+                   p.town===searchTown||
+                   (p.town&&p.town.includes(searchTown));
+      if(!inAddr)return false;
+    }
+
+    // Free text filter (from page 2)
+    if(searchText){
+      const hay=`${p.name} ${p.address} ${p.type}`.toLowerCase();
+      if(!hay.includes(searchText))return false;
+    }
+
+    // P3 search bar filter
+    if(q){
+      const hay=`${p.name} ${p.address} ${p.type}`.toLowerCase();
+      if(!hay.includes(q))return false;
+    }
+    return true;
+  });
+
+  if(uLat)list=list.sort((a,b)=>hav(uLat,uLng,a.lat,a.lng)-hav(uLat,uLng,b.lat,b.lng));
+
+  document.getElementById('cnt').textContent=list.length;
+  const box=document.getElementById('p3list');
+  if(!list.length){
+    box.innerHTML='<div class="nores">No results found.<br><small>Try clearing the search or changing category.</small></div>';
+    return;
+  }
+  box.innerHTML='';
+  list.forEach(p=>{
+    const t=TI[p.type]||TI['hospital'];
+    const dist=dLabel(p);
+    const d=document.createElement('div');d.className='rcard';
+    d.innerHTML=`
+      <div class="ri ${p.type}">${t.e}</div>
+      <div class="rinfo">
+        <div class="rname">${p.name}</div>
+        <div class="rmeta">
+          <span>${p.address}</span>
+          ${dist?`<span class="rdist">${dist}</span>`:''}
+          ${p.open24?'<span class="r24">24h</span>':''}
+          ${p.cuisine?`<span class="rcuisine">${p.cuisine}</span>`:''}
+          ${p.priv?'<span class="rpriv">PRIVATE</span>':''}
+        </div>
+      </div>
+      <div class="rarr">›</div>`;
+    d.onclick=()=>openPlace(p);
+    box.appendChild(d);
+  });
+}
+
+// ── OPEN PLACE ──
+function openPlace(p){
+  document.getElementById('p4n').textContent=p.name;
+  document.getElementById('p4a').textContent=p.address+(p.phone?` · 📞 ${p.phone}`:'');
+  const cb=document.getElementById('p4call');
+  if(p.phone){cb.href='tel:'+p.phone;cb.setAttribute('onclick','window.location.href=\'tel:'+p.phone+'\'');cb.style.display='flex';}
+  else{cb.style.display='none';}
+  goTo('p4');
+  setTimeout(()=>{
+    initMap();mapObj.invalidateSize();
+    mapObj.setView([p.lat,p.lng],14);
+    pMarks.forEach(m=>mapObj.removeLayer(m));pMarks=[];
+    const t=TI[p.type]||TI['hospital'];
+    const m=L.marker([p.lat,p.lng],{icon:L.divIcon({
+      className:'',
+      html:`<div style="width:42px;height:42px;border-radius:50%;background:#fff;border:3px solid ${t.c};display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:0 3px 14px rgba(0,0,0,.22)">${t.e}</div>`,
+      iconSize:[42,42],iconAnchor:[21,21]
+    })}).addTo(mapObj).bindTooltip(p.name,{direction:'top',offset:[0,-26],opacity:.9});
+    pMarks.push(m);
+    document.getElementById('micN').textContent=p.name;
+    document.getElementById('micA').textContent=p.address+(p.phone?` · ${p.phone}`:'');
+    document.getElementById('micD').textContent=dLabel(p);
+    document.getElementById('micE').textContent='';
+    document.getElementById('micNav').href=`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`;
+    document.getElementById('mic').classList.add('show');
+    placeUMark();
+    if(uLat)drawRoute(p);
+  },500);
+}
+
+// ── ROUTING ──
+async function drawRoute(p){
+  if(!uLat||!mapObj)return;
+  if(rLine)mapObj.removeLayer(rLine);
+  if(aMark)mapObj.removeLayer(aMark);
+  if(aRAF)cancelAnimationFrame(aRAF);
+  document.getElementById('rload').classList.add('show');
+  try{
+    const url=`https://router.project-osrm.org/route/v1/driving/${uLng},${uLat};${p.lng},${p.lat}?overview=full&geometries=geojson`;
+    const res=await fetch(url);const data=await res.json();
+    document.getElementById('rload').classList.remove('show');
+    if(data.routes&&data.routes.length){
+      const route=data.routes[0];
+      const coords=route.geometry.coordinates.map(c=>[c[1],c[0]]);
+      const t=TI[p.type]||TI['hospital'];
+      const dM=route.distance,dS=route.duration;
+      const dT=dM<1000?`${Math.round(dM)} m`:`${(dM/1000).toFixed(1)} km`;
+      const eT=dS<60?`${Math.round(dS)} sec`:`${Math.round(dS/60)} min drive`;
+      document.getElementById('micD').textContent=`🛣 ${dT}`;
+      document.getElementById('micE').textContent=`⏱ ${eT}`;
+      rLine=L.polyline(coords,{color:t.c,weight:5,opacity:.88,lineJoin:'round',lineCap:'round'}).addTo(mapObj);
+      mapObj.fitBounds(rLine.getBounds(),{padding:[60,60]});
+      aMark=L.marker(coords[0],{icon:L.divIcon({
+        className:'',
+        html:`<div style="width:14px;height:14px;border-radius:50%;background:${t.c};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3)"></div>`,
+        iconSize:[14,14],iconAnchor:[7,7]
+      })}).addTo(mapObj);
+      let idx=0,step=0,STEPS=25;
+      function anim(){
+        if(idx>=coords.length-1)idx=0;
+        const s=coords[idx],e=coords[Math.min(idx+1,coords.length-1)];
+        const tt=step/STEPS;
+        aMark.setLatLng([s[0]+(e[0]-s[0])*tt,s[1]+(e[1]-s[1])*tt]);
+        step++;if(step>STEPS){step=0;idx++;}
+        aRAF=requestAnimationFrame(anim);
+      }
+      anim();
+    }else{fallback(p);}
+  }catch(e){document.getElementById('rload').classList.remove('show');fallback(p);}
+}
+function fallback(p){
+  const t=TI[p.type]||TI['hospital'];
+  rLine=L.polyline([[uLat,uLng],[p.lat,p.lng]],{color:t.c,weight:3,dashArray:'8 6',opacity:.8}).addTo(mapObj);
+  mapObj.fitBounds(rLine.getBounds(),{padding:[50,50]});
+}
+
+// ── TOAST ──
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// ── MODALS ──
+function openAbout(){document.getElementById('aboutModal').classList.add('show');}
+function closeAbout(){document.getElementById('aboutModal').classList.remove('show');}
+function openFeedback(){document.getElementById('feedbackModal').classList.add('show');}
+function closeFeedback(){document.getElementById('feedbackModal').classList.remove('show');}
+function submitFeedback(){
+  const email=document.getElementById('fbEmail').value.trim();
+  const msg=document.getElementById('fbMsg').value.trim();
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showToast('Please enter a valid email address.');document.getElementById('fbEmail').focus();return;}
+  if(!msg){showToast('Please describe your issue or message.');document.getElementById('fbMsg').focus();return;}
+  showToast('Message sent! Thank you 🙏');
+  document.getElementById('fbEmail').value='';
+  document.getElementById('fbMsg').value='';
+  closeFeedback();
+}
+
+
+// ── STAR RATING ──
+let starVal=0;
+const STAR_LABELS=['','Poor','Fair','Good','Very Good','Excellent'];
+function rateStar(n){
+  starVal=n;
+  document.querySelectorAll('.star').forEach((s,i)=>{s.classList.toggle('lit',i<n);});
+  document.getElementById('starLbl').textContent=STAR_LABELS[n]||'';
+}
+function closeStars(){document.getElementById('starOverlay').classList.remove('show');}
+function submitStars(){
+  if(!starVal){showToast('Please pick a star rating.');return;}
+  showToast('Thanks for rating us '+STAR_LABELS[starVal]+' ⭐');
+  closeStars();
+}
+function showStarRating(){
+  starVal=0;
+  document.querySelectorAll('.star').forEach(s=>s.classList.remove('lit'));
+  document.getElementById('starLbl').textContent='';
+  document.getElementById('starOverlay').classList.add('show');
+}
+
+// ── INIT ──
+setCat('all');
+</script>
+
+<!-- STAR RATING POPUP -->
+<div class="star-overlay" id="starOverlay">
+  <div class="star-box">
+    <h3>How was your experience?</h3>
+    <p>Rate your visit to help us improve the Emergency Resource Locator.</p>
+    <div class="stars" id="starRow">
+      <span class="star" data-v="1" onclick="rateStar(1)">★</span>
+      <span class="star" data-v="2" onclick="rateStar(2)">★</span>
+      <span class="star" data-v="3" onclick="rateStar(3)">★</span>
+      <span class="star" data-v="4" onclick="rateStar(4)">★</span>
+      <span class="star" data-v="5" onclick="rateStar(5)">★</span>
+    </div>
+    <div class="star-lbl" id="starLbl"></div>
+    <div class="star-acts">
+      <button class="star-skip" onclick="closeStars()">Skip</button>
+      <button class="star-sub" onclick="submitStars()">Submit</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
